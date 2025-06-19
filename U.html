@@ -1,0 +1,176 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aplikasi Tasya</title>
+<style>
+  body {
+    font-family: 'Arial', cursive, sans-serif;
+    background: linear-gradient(to right, #ffe6e6, #fff0f5);
+    margin: 0;
+    padding: 20px;
+    position: relative;
+  }
+
+  /* Tombol Home */
+  .home-button {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    font-size: 24px;
+    background-color: #d36b88;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    display: none; /* tampilkan di slide 2 dan 3 */
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    transition: background 0.3s;
+  }
+  .home-button:hover {
+    background-color: #a65370;
+  }
+
+  /* Tombol utama dan navigasi */
+  button {
+    padding: 15px 25px;
+    margin: 15px 10px 0 10px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+    transition: background 0.3s, transform 0.2s;
+    background-color: #8f4b6e;
+    color: white;
+  }
+  button:hover {
+    background-color: #a8567b;
+    transform: translateY(-2px);
+  }
+
+  /* Style untuk slide */
+  .slide {
+    display: none;
+    max-width: 400px;
+    margin: auto;
+  }
+  .active {
+    display: block;
+  }
+
+  /* Style untuk form pesan */
+  #formPesan {
+    padding: 20px;
+    background-color: #ffd0e0;
+    border-radius: 20px;
+    box-shadow: 2px 2px 15px rgba(0,0,0,0.2);
+  }
+  #formPesan textarea {
+    width: calc(100% - 20px);
+    height: 100px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid #d36b88;
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    font-size: 14px;
+  }
+
+  /* Style pesan display */
+  #pesanTampil {
+    padding: 20px;
+    background-color: #ffd0e0;
+    border-radius: 20px;
+    box-shadow: 2px 2px 15px rgba(0,0,0,0.2);
+    min-height: 50px;
+    max-width: 400px;
+    margin: auto;
+    margin-top: 20px;
+    font-size: 16px;
+    color: #4b1d3f;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- Tombol Home -->
+<button class="home-button" onclick="showSlide(1)">🏠</button>
+
+<!-- Slide 1: Pilihan -->
+<div id="slide1" class="slide active">
+  <h2 style="text-align:center; color:#b2226f;">Silakan Pilih</h2>
+  <div style="text-align:center;">
+    <button onclick="showSlide(2)">Ketik Pesan</button>
+    <button onclick="showSlide(3)">Lihat Pesan</button>
+  </div>
+</div>
+
+<!-- Slide 2: Tulis Pesan -->
+<div id="slide2" class="slide">
+  <div id="formPesan">
+    <h2 style="text-align:center; color:#b2226f;">Ketik Pesan</h2>
+    <textarea id="pesanInput" placeholder="Tulis pesan di sini..."></textarea><br>
+    <button onclick="simpanPesan()">Simpan</button>
+    <button onclick="showSlide(1)">Kembali</button>
+  </div>
+</div>
+
+<!-- Slide 3: Lihat Pesan -->
+<div id="slide3" class="slide">
+  <div id="pesanTampil">
+    <h2 style="text-align:center; color:#b2226f;">Pesan yang Disimpan</h2>
+    <p id="tampilPesan">(Bel ada pesan)</p>
+  </div>
+  <div style="text-align:center; margin-top: 15px;">
+    <button onclick="hapusPesan()">Hapus Pesan</button>
+    <button onclick="showSlide(1)">Kembali</button>
+  </div>
+</div>
+
+<script>
+  const btnHome = document.querySelector('.home-button');
+
+  function showSlide(n) {
+    document.querySelectorAll('.slide').forEach(slide => slide.classList.remove('active'));
+    document.getElementById('slide' + n).classList.add('active');
+
+    // Tampilkan tombol home hanya di slide 2 dan 3
+    if (n === 1) {
+      btnHome.style.display = 'none';
+    } else {
+      btnHome.style.display = 'block';
+    }
+
+    // Jika slide 3, update pesan
+    if (n === 3) {
+      const pesan = localStorage.getItem('pesan') || '(Belum ada pesan)';
+      document.getElementById('tampilPesan').textContent = pesan;
+    }
+  }
+
+  function simpanPesan() {
+    const pesan = document.getElementById('pesanInput').value.trim();
+    if (pesan === '') {
+      alert('Pesan kosong!');
+      return;
+    }
+    localStorage.setItem('pesan', pesan);
+    alert('Pesan disimpan!');
+    document.getElementById('pesanInput').value = '';
+    showSlide(1);
+  }
+
+  function hapusPesan() {
+    localStorage.removeItem('pesan');
+    document.getElementById('tampilPesan').textContent = '(Belum ada pesan)';
+  }
+</script>
+
+</body>
+</html>
