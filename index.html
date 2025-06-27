@@ -1,4 +1,4 @@
-<!<!DOCTYPE html>
+DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
@@ -62,14 +62,18 @@
       border-radius: 20px;
       box-shadow: 2px 2px 15px rgba(0,0,0,0.2);
     }
-    #formPesan textarea {
+    #formPesan input, #formPesan textarea {
       width: calc(100% - 20px);
-      height: 100px;
       padding: 10px;
       border-radius: 10px;
       border: 2px solid #d36b88;
       font-family: 'Comic Sans MS', cursive, sans-serif;
       font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    #formPesan textarea {
+      height: 100px;
     }
 
     #pesanTampil {
@@ -92,19 +96,32 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
-    // GANTI INI DENGAN KONFIGURASI FIREBASE MILIKMU
-const firebaseConfig = {
-  apiKey: "AIzaSyD44gT5MSFOj9dTwTa2vs9p-ttur3FPd-o",
-  authDomain: "tasya-3af6a.firebaseapp.com",
-  projectId: "tasya-3af6a",
-  storageBucket: "tasya-3af6a.firebasestorage.app",
-  messagingSenderId: "928127390903",
-  appId: "1:928127390903:web:9f1ad166e4dd3fa268e932",
-  measurementId: "G-K53J9SZPPV"
-};
+    // Konfigurasi Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyD44gT5MSFOj9dTwTa2vs9p-ttur3FPd-o",
+      authDomain: "tasya-3af6a.firebaseapp.com",
+      projectId: "tasya-3af6a",
+      storageBucket: "tasya-3af6a.firebasestorage.app",
+      messagingSenderId: "928127390903",
+      appId: "1:928127390903:web:9f1ad166e4dd3fa268e932",
+      measurementId: "G-K53J9SZPPV"
+    };
 
-    // Inisialisasi Firebase
     firebase.initializeApp(firebaseConfig);
+    <!-- Tambahkan ini di bawah firebase.initializeApp(firebaseConfig); -->
+<script>
+  const db = firebase.firestore();
+
+  // Buat device ID jika belum ada
+  function getDeviceId() {
+    let id = localStorage.getItem('deviceId');
+    if (!id) {
+      id = 'device-' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('deviceId', id);
+    }
+    return id;
+  }
+  const currentDeviceId = getDeviceId();
     const db = firebase.firestore();
   </script>
 </head>
@@ -125,6 +142,7 @@ const firebaseConfig = {
 <div id="slide2" class="slide">
   <div id="formPesan">
     <h2 style="text-align:center; color:#b2226f;">Ketik Pesan</h2>
+    <input id="namaInput" placeholder="Nama kamu..." /><br>
     <textarea id="pesanInput" placeholder="Tulis pesan di sini..."></textarea><br>
     <button onclick="simpanPesan()">Simpan</button>
     <button onclick="showSlide(1)">Kembali</button>
@@ -152,47 +170,71 @@ const firebaseConfig = {
   }
 
   async function simpanPesan() {
-    const pesan = document.getElementById('pesanInput').value.trim();
-    if (pesan === '') {
-      alert('Pesan kosong!');
-      return;
-    }
+  const nama = document.getElementById('namaInput').value.trim();
+  const pesan = document.getElementById('pesanInput').value.trim();
 
-    try {
-      await db.collection("pesan").add({
-        isi: pesan,
-        waktu: new Date().toISOString()
-      });
-      alert('Pesan disimpan!');
-      document.getElementById('pesanInput').value = '';
-      showSlide(1);
-    } catch (error) {
-      alert("Gagal menyimpan pesan: " + error.message);
-    }
+  if (nama === '' || pesan === '') {
+    alert('Nama dan pesan harus diisi!');
+    return;
   }
+
+  try {
+    await db.collection("pesan").add({
+      nama: nama,
+      isi: pesan,
+      waktu: new Date().toISOString(),
+      deviceId: currentDeviceId
+    });
+    alert('Pesan disimpan!');
+    document.getElementById('namaInput').value = '';
+    document.getElementById('pesanInput').value = '';
+    showSlide(1);
+  } catch (error) {
+    alert("Gagal menyimpan pesan: " + error.message);
+  }
+}
 
   function loadPesan() {
-    const tampilDiv = document.getElementById('tampilPesan');
-    tampilDiv.innerHTML = "(Memuat pesan...)";
+  const tampilDiv = document.getElementById('tampilPesan');
+  tampilDiv.innerHTML = "(Memuat pesan...)";
 
-    db.collection("pesan").orderBy("waktu", "desc").get()
-      .then(snapshot => {
-        if (snapshot.empty) {
-          tampilDiv.innerHTML = "(Belum ada pesan)";
-          return;
-        }
-        tampilDiv.innerHTML = '';
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          tampilDiv.innerHTML += `<p style="margin-bottom:10px;">📩 ${data.isi}</p><hr>`;
-        });
+  db.collection("pesan").orderBy("waktu", "desc").get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        tampilDiv.innerHTML = "(Belum ada pesan)";
+        return;
+      }
+      tampilDiv.innerHTML = '';
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const isOwn = data.deviceId === currentDeviceId;
+        tampilDiv.innerHTML += `
+          <div style="text-align:left; margin-bottom:15px;">
+            <strong>${data.nama || 'Anonim'}:</strong> ${data.isi}
+            ${isOwn ? `<br><button onclick="hapusPesan('${doc.id}')" style="margin-top:5px; background:#c0392b; color:white; border:none; border-radius:5px; padding:5px 10px; cursor:pointer;">Hapus</button>` : ''}
+          </div>
+          <hr>`;
+      });
+    })
+    .catch(error => {
+      tampilDiv.innerHTML = "(Gagal mengambil pesan)";
+      console.error("Error: ", error);
+    });
+}
+
+function hapusPesan(id) {
+  if (confirm("Yakin ingin menghapus pesan ini?")) {
+    db.collection("pesan").doc(id).delete()
+      .then(() => {
+        alert("Pesan dihapus.");
+        loadPesan();
       })
       .catch(error => {
-        tampilDiv.innerHTML = "(Gagal mengambil pesan)";
-        console.error("Error: ", error);
+        alert("Gagal menghapus pesan: " + error.message);
       });
   }
+}
 </script>
 
 </body>
-  </html>
+</html>
