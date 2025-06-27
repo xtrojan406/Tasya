@@ -1,4 +1,4 @@
-<DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
@@ -29,7 +29,10 @@
       box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
       transition: background 0.3s;
     }
-    .home-button:hover { background-color: #a65370; }
+
+    .home-button:hover {
+      background-color: #a65370;
+    }
 
     button {
       padding: 15px 25px;
@@ -44,6 +47,7 @@
       background-color: #8f4b6e;
       color: white;
     }
+
     button:hover {
       background-color: #a8567b;
       transform: translateY(-2px);
@@ -54,7 +58,10 @@
       max-width: 400px;
       margin: auto;
     }
-    .active { display: block; }
+
+    .active {
+      display: block;
+    }
 
     #formPesan {
       padding: 20px;
@@ -62,6 +69,7 @@
       border-radius: 20px;
       box-shadow: 2px 2px 15px rgba(0,0,0,0.2);
     }
+
     #formPesan input, #formPesan textarea {
       width: calc(100% - 20px);
       padding: 10px;
@@ -87,7 +95,28 @@
       margin-top: 20px;
       font-size: 16px;
       color: #4b1d3f;
-      text-align: center;
+    }
+
+    .pesan-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      border-bottom: 1px dashed #a8567b;
+      padding-bottom: 8px;
+    }
+
+    .hapus-btn {
+      background: #c0392b;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .hapus-btn:hover {
+      background: #a83226;
     }
   </style>
 
@@ -96,7 +125,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
-    // Konfigurasi Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyD44gT5MSFOj9dTwTa2vs9p-ttur3FPd-o",
       authDomain: "tasya-3af6a.firebaseapp.com",
@@ -109,20 +137,17 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-<script>
-  const db = firebase.firestore();
 
-  // Buat device ID jika belum ada
-  function getDeviceId() {
-    let id = localStorage.getItem('deviceId');
-    if (!id) {
-      id = 'device-' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('deviceId', id);
+    function getDeviceId() {
+      let id = localStorage.getItem('deviceId');
+      if (!id) {
+        id = 'device-' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('deviceId', id);
+      }
+      return id;
     }
-    return id;
-  }
-  const currentDeviceId = getDeviceId();
-    
+
+    const currentDeviceId = getDeviceId();
   </script>
 </head>
 <body>
@@ -170,71 +195,71 @@
   }
 
   async function simpanPesan() {
-  const nama = document.getElementById('namaInput').value.trim();
-  const pesan = document.getElementById('pesanInput').value.trim();
+    const nama = document.getElementById('namaInput').value.trim();
+    const pesan = document.getElementById('pesanInput').value.trim();
 
-  if (nama === '' || pesan === '') {
-    alert('Nama dan pesan harus diisi!');
-    return;
-  }
+    if (nama === '' || pesan === '') {
+      alert('Nama dan pesan harus diisi!');
+      return;
+    }
 
-  try {
-    await db.collection("pesan").add({
-      nama: nama,
-      isi: pesan,
-      waktu: new Date().toISOString(),
-      deviceId: currentDeviceId
-    });
-    alert('Pesan disimpan!');
-    document.getElementById('namaInput').value = '';
-    document.getElementById('pesanInput').value = '';
-    showSlide(1);
-  } catch (error) {
-    alert("Gagal menyimpan pesan: " + error.message);
+    try {
+      await db.collection("pesan").add({
+        nama: nama,
+        isi: pesan,
+        waktu: new Date().toISOString(),
+        deviceId: currentDeviceId
+      });
+      alert('Pesan disimpan!');
+      document.getElementById('namaInput').value = '';
+      document.getElementById('pesanInput').value = '';
+      showSlide(1);
+    } catch (error) {
+      alert("Gagal menyimpan pesan: " + error.message);
+    }
   }
-}
 
   function loadPesan() {
-  const tampilDiv = document.getElementById('tampilPesan');
-  tampilDiv.innerHTML = "(Memuat pesan...)";
+    const tampilDiv = document.getElementById('tampilPesan');
+    tampilDiv.innerHTML = "(Memuat pesan...)";
 
-  db.collection("pesan").orderBy("waktu", "desc").get()
-    .then(snapshot => {
-      if (snapshot.empty) {
-        tampilDiv.innerHTML = "(Belum ada pesan)";
-        return;
-      }
-      tampilDiv.innerHTML = '';
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const isOwn = data.deviceId === currentDeviceId;
-        tampilDiv.innerHTML += `
-          <div style="text-align:left; margin-bottom:15px;">
-            <strong>${data.nama || 'Anonim'}:</strong> ${data.isi}
-            ${isOwn ? `<br><button onclick="hapusPesan('${doc.id}')" style="margin-top:5px; background:#c0392b; color:white; border:none; border-radius:5px; padding:5px 10px; cursor:pointer;">Hapus</button>` : ''}
-          </div>
-          <hr>`;
-      });
-    })
-    .catch(error => {
-      tampilDiv.innerHTML = "(Gagal mengambil pesan)";
-      console.error("Error: ", error);
-    });
-}
+    db.collection("pesan").orderBy("waktu", "desc").get()
+      .then(snapshot => {
+        if (snapshot.empty) {
+          tampilDiv.innerHTML = "(Belum ada pesan)";
+          return;
+        }
 
-function hapusPesan(id) {
-  if (confirm("Yakin ingin menghapus pesan ini?")) {
-    db.collection("pesan").doc(id).delete()
-      .then(() => {
-        alert("Pesan dihapus.");
-        loadPesan();
+        tampilDiv.innerHTML = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const isOwn = data.deviceId === currentDeviceId;
+          tampilDiv.innerHTML += `
+            <div class="pesan-item">
+              <div><strong>${data.nama || 'Anonim'}:</strong> ${data.isi}</div>
+              ${isOwn ? `<button class="hapus-btn" onclick="hapusPesan('${doc.id}')">Hapus</button>` : ''}
+            </div>`;
+        });
       })
       .catch(error => {
-        alert("Gagal menghapus pesan: " + error.message);
+        tampilDiv.innerHTML = "(Gagal mengambil pesan)";
+        console.error("Error: ", error);
       });
   }
-}
+
+  function hapusPesan(id) {
+    if (confirm("Yakin ingin menghapus pesan ini?")) {
+      db.collection("pesan").doc(id).delete()
+        .then(() => {
+          alert("Pesan dihapus.");
+          loadPesan();
+        })
+        .catch(error => {
+          alert("Gagal menghapus pesan: " + error.message);
+        });
+    }
+  }
 </script>
 
 </body>
-</html>
+      </html>
